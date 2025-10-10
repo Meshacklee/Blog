@@ -1,12 +1,13 @@
 # backend/afripen_news/settings.py
 import os
 from pathlib import Path
+import dj_database_url # Add this for easy DB URL parsing
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Use Render's environment variables
+# Use Railway's environment variables
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-fallback-local-dev-key-change-this-for-production!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -14,7 +15,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'your-fallback-local-dev-key-change-th
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true' # Default False for production
 
 # ALLOWED_HOSTS
-# Render will provide the domain via environment variables
+# Railway will provide the domain via environment variables
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
@@ -66,24 +67,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'afripen_news.wsgi.application'
 
 # Database
-# Use Render's PostgreSQL database environment variables in production
+# Use dj-database-url to parse DATABASE_URL provided by Railway
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
-
-# For local development with SQLite (fallback if env vars not set)
-if not os.environ.get('DB_NAME'):
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -109,9 +100,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Render will collect static files here
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Railway will collect static files here
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage' # WhiteNoise storage
+# WhiteNoise storage for serving static files efficiently
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (user uploads)
 MEDIA_URL = '/media/'
@@ -145,8 +137,3 @@ CKEDITOR_CONFIGS = {
         'width': '100%',
     },
 }
-
-# WhiteNoise settings (for serving static files efficiently)
-WHITENOISE_USE_FINDERS = True
-WHITENOISE_AUTOREFRESH = True
-WHITENOISE_MANIFEST_STRICT = False
