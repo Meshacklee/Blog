@@ -1,19 +1,12 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "build" }
-    }
+    { "src": "package.json", "use": "@vercel/static-build" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "frontend/build/$1"
-    }
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
+  "env": {
+    "REACT_APP_API_BASE_URL": "https://blog-production-c780.up.railway.app/api"
+  }
 }
