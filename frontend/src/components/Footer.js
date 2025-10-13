@@ -7,9 +7,6 @@ import {
   Typography,
   Link,
   IconButton,
-  Divider,
-  Card,
-  CardContent,
 } from '@mui/material';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
@@ -135,4 +132,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

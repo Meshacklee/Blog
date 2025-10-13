@@ -1,5 +1,6 @@
 // frontend/src/components/Header.js
 import React, { useState, useContext, useEffect } from 'react';
+// Remove useMediaQuery from this import:
 import {
   AppBar,
   Toolbar,
@@ -9,7 +10,7 @@ import {
   Box,
   styled,
   useTheme,
-  useMediaQuery,
+  // useMediaQuery, // REMOVE THIS LINE
   Menu,
   MenuItem,
   Divider,
