@@ -1,22 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, CircularProgress, Paper } from '@mui/material';
-import { useParams, Link } from 'react-router-dom';
+import {
+  Container,
+  Typography,
+  Box,
+  CircularProgress,
+  Avatar,
+  TextField,
+  Button,
+  Paper,
+  Grid,
+  Divider,
+} from '@mui/material';
+import { useParams } from 'react-router-dom';
 import { newsApi } from '../services/api';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 const PostDetail = () => {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await newsApi.getPostDetail(slug);
+        const response = await newsApi.get(`/posts/${slug}/`);
         setPost(response.data);
-      } catch (error) {
-        console.error('Error fetching post details:', error);
+      } catch (err) {
+        setError('Failed to load post');
       } finally {
         setLoading(false);
       }
@@ -24,66 +36,111 @@ const PostDetail = () => {
     fetchPost();
   }, [slug]);
 
-  if (loading) {
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const response = await newsApi.get(`/posts/${slug}/comments/`);
+        setComments(response.data);
+      } catch {
+        console.error('Failed to load comments');
+      }
+    };
+    fetchComments();
+  }, [slug]);
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) return;
+    try {
+      await newsApi.post(`/posts/${slug}/comments/`, { text: commentText });
+      setCommentText('');
+      const response = await newsApi.get(`/posts/${slug}/comments/`);
+      setComments(response.data);
+    } catch {
+      console.error('Failed to post comment');
+    }
+  };
+
+  if (loading)
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+      <Box textAlign="center" py={6}>
         <CircularProgress />
       </Box>
     );
-  }
 
-  if (!post) {
+  if (error)
     return (
-      <Box sx={{ textAlign: 'center', py: 6 }}>
-        <Typography variant="h5" color="text.secondary">
-          Post not found.
+      <Container>
+        <Typography color="error" textAlign="center" py={4}>
+          {error}
         </Typography>
-      </Box>
+      </Container>
     );
-  }
+
+  if (!post) return null;
 
   return (
-    <>
-      <Header />
-      <Container maxWidth="md" sx={{ py: 6 }}>
-        {post.featured_image && (
-          <Paper sx={{ mb: 3 }}>
-            <img
-              src={
-                post.featured_image.startsWith('http')
-                  ? post.featured_image
-                  : `http://localhost:8000${post.featured_image}`
-              }
-              alt={post.title}
-              style={{
-                width: '100%',
-                maxHeight: '400px',
-                objectFit: 'cover',
-                borderRadius: '4px',
-              }}
-            />
-          </Paper>
-        )}
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        {post.title}
+      </Typography>
+      <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+        By {post.author?.username || 'Unknown'} —{' '}
+        {new Date(post.created_at).toLocaleDateString()}
+      </Typography>
 
-        <Typography variant="h3" gutterBottom>
-          {post.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {new Date(post.created_at).toLocaleDateString()}
-        </Typography>
-
-        <Typography
-          variant="body1"
-          sx={{ mt: 3 }}
-          dangerouslySetInnerHTML={{ __html: post.content }}
+      {post.image && (
+        <Box
+          component="img"
+          src={post.image}
+          alt={post.title}
+          sx={{ width: '100%', borderRadius: 2, my: 2 }}
         />
+      )}
 
-        <Box sx={{ mt: 4 }}>
-          <Link to="/">← Back to Home</Link>
-        </Box>
-      </Container>
-      <Footer />
-    </>
+      <Typography variant="body1" sx={{ whiteSpace: 'pre-line', mb: 4 }}>
+        {post.content}
+      </Typography>
+
+      <Divider sx={{ my: 4 }} />
+
+      <Typography variant="h6" gutterBottom>
+        Comments ({comments.length})
+      </Typography>
+
+      <Box mb={3}>
+        {comments.map((comment) => (
+          <Paper key={comment.id} sx={{ p: 2, mb: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item>
+                <Avatar>{comment.user?.username?.[0]?.toUpperCase() || 'U'}</Avatar>
+              </Grid>
+              <Grid item xs>
+                <Typography variant="subtitle2">{comment.user?.username || 'Anonymous'}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {new Date(comment.created_at).toLocaleString()}
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 1 }}>
+                  {comment.text}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+        ))}
+      </Box>
+
+      <TextField
+        fullWidth
+        multiline
+        rows={3}
+        variant="outlined"
+        label="Add a comment..."
+        value={commentText}
+        onChange={(e) => setCommentText(e.target.value)}
+      />
+      <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleCommentSubmit}>
+        Post Comment
+      </Button>
+    </Container>
   );
 };
 

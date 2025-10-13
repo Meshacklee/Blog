@@ -20,7 +20,7 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
-  Autocomplete, // Add Autocomplete import
+  Autocomplete,
 } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -489,5 +489,4 @@ const Header = () => {
     </>
   );
 };
-
 export default Header;

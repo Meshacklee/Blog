@@ -14,49 +14,21 @@ import EducationPage from './categories/EducationPage';
 import PoliticsPage from './categories/PoliticsPage';
 
 const Home = () => {
-  const [worldPosts, setWorldPosts] = useState([]);
-  const [politicsPosts, setPoliticsPosts] = useState([]);
-  const [featuredPosts, setFeaturedPosts] = useState([]);
   const [carouselPosts, setCarouselPosts] = useState([]);
-  const [worldLoading, setWorldLoading] = useState(true);
-  const [politicsLoading, setPoliticsLoading] = useState(true);
-  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [carouselLoading, setCarouselLoading] = useState(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch World News posts
-        setWorldLoading(true);
-        const worldResponse = await newsApi.getPostsByCategory('worldnews');
-        setWorldPosts(Array.isArray(worldResponse.data) ? worldResponse.data : (worldResponse.data?.results || []));
-
-        // Fetch Politics posts
-        setPoliticsLoading(true);
-        const politicsResponse = await newsApi.getPostsByCategory('politics');
-        setPoliticsPosts(Array.isArray(politicsResponse.data) ? politicsResponse.data : (politicsResponse.data?.results || []));
-
-        // Fetch Featured posts
-        setFeaturedLoading(true);
-        const featuredResponse = await newsApi.getFeaturedPosts();
-        const featuredData = Array.isArray(featuredResponse.data) ? featuredResponse.data : (featuredResponse.data?.results || []);
-        setFeaturedPosts(featuredData.slice(0, 10));
-
         // Fetch Carousel posts
         setCarouselLoading(true);
         const carouselResponse = await newsApi.getPostsByCategory('slidingcarousel');
         setCarouselPosts(Array.isArray(carouselResponse.data) ? carouselResponse.data : (carouselResponse.data?.results || []));
       } catch (error) {
         console.error('Error fetching posts:', error);
-        setWorldPosts([]);
-        setPoliticsPosts([]);
-        setFeaturedPosts([]);
         setCarouselPosts([]);
       } finally {
-        setWorldLoading(false);
-        setPoliticsLoading(false);
-        setFeaturedLoading(false);
         setCarouselLoading(false);
       }
     };
