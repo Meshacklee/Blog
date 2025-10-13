@@ -5,20 +5,16 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Card,
-  CardContent,
   CardMedia,
   CardActions,
   Grid,
-  Divider,
   Chip,
   Button,
   TextField,
   Avatar,
-  Fab,
-  Tooltip,
   Skeleton,
   IconButton as MuiIconButton,
+  Paper,
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -29,7 +25,6 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-// Import social icons
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -41,30 +36,16 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
-// --- Helper Functions ---
-// In PostDetail.js, replace the existing getImageUrl function with this:
+// Helper: Format image URLs
 const getImageUrl = (path) => {
-  if (!path) return null;
-  
-  // If it's already a full URL, return it
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // If it starts with /media/, prepend the base URL
-  if (path.startsWith('/media/')) {
-    return `http://127.0.0.1:8000${path}`;
-  }
-  
-  // If it's a relative path, prepend /media/ and the base URL
-  if (!path.startsWith('/')) {
-    return `http://127.0.0.1:8000/media/${path}`;
-  }
-  
-  // Fallback: prepend the base URL
-  return `http://127.0.0.1:8000${path}`;
+  if (!path) return '/placeholder.jpg';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('/media/')) return `${API_BASE}${path}`;
+  if (!path.startsWith('/')) return `${API_BASE}/media/${path}`;
+  return `${API_BASE}${path}`;
 };
 
+// Helper: Format content with line breaks
 const formatContent = (text = '') => {
   return String(text).split('\n').map((line, index) => (
     <React.Fragment key={index}>
@@ -74,51 +55,21 @@ const formatContent = (text = '') => {
   ));
 };
 
-// CSRF token helper function
-const getCsrfToken = () => {
-  const name = 'csrftoken';
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
-// --- End Helper Functions ---
-
-// ***** LAZY IMAGE COMPONENTS *****
-// In PostDetail.js, replace the existing LazyImage component with this:
+// Lazy Image Component
 const LazyImage = ({ src, alt, sx, ...props }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Reset state when src changes
     setImageLoaded(false);
     setImageError(false);
   }, [src]);
 
   const imageUrl = getImageUrl(src);
 
-  if (!imageUrl) {
-    return (
-      <Box sx={{ ...sx, bgcolor: 'grey.200', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">No Image</Typography>
-      </Box>
-    );
-  }
-
   return (
     <>
-      {!imageLoaded && !imageError && (
-        <Skeleton variant="rectangular" sx={sx} />
-      )}
+      {!imageLoaded && !imageError && <Skeleton variant="rectangular" sx={sx} />}
       <Box
         component="img"
         src={imageUrl}
@@ -129,7 +80,7 @@ const LazyImage = ({ src, alt, sx, ...props }) => {
           objectFit: 'cover',
         }}
         onLoad={() => setImageLoaded(true)}
-        onError={(e) => {
+        onError={() => {
           console.error('Image failed to load:', imageUrl);
           setImageError(true);
           setImageLoaded(false);
@@ -146,32 +97,21 @@ const LazyImage = ({ src, alt, sx, ...props }) => {
   );
 };
 
+// Lazy CardMedia Component
 const LazyCardMedia = ({ src, alt, sx, ...props }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Reset state when src changes
     setImageLoaded(false);
     setImageError(false);
   }, [src]);
 
-
   const imageUrl = getImageUrl(src);
-
-  if (!imageUrl) {
-    return (
-      <Box sx={{ ...sx, bgcolor: 'grey.200', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="caption" color="text.secondary">No Image</Typography>
-      </Box>
-    );
-  }
 
   return (
     <>
-      {!imageLoaded && !imageError && (
-        <Skeleton variant="rectangular" sx={sx} />
-      )}
+      {!imageLoaded && !imageError && <Skeleton variant="rectangular" sx={sx} />}
       <CardMedia
         component="img"
         image={imageUrl}
@@ -182,7 +122,7 @@ const LazyCardMedia = ({ src, alt, sx, ...props }) => {
           objectFit: 'cover',
         }}
         onLoad={() => setImageLoaded(true)}
-        onError={(e) => {
+        onError={() => {
           console.error('CardMedia image failed to load:', imageUrl);
           setImageError(true);
           setImageLoaded(false);
@@ -199,13 +139,12 @@ const LazyCardMedia = ({ src, alt, sx, ...props }) => {
   );
 };
 
-// In PostDetail.js, replace the existing LazyAvatar component with this:
+// Lazy Avatar Component
 const LazyAvatar = ({ src, alt, sx, ...props }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Reset state when src changes
     setImageLoaded(false);
     setImageError(false);
   }, [src]);
@@ -213,22 +152,17 @@ const LazyAvatar = ({ src, alt, sx, ...props }) => {
   const imageUrl = getImageUrl(src);
 
   if (!imageUrl || imageError) {
-    // Fallback to a colored avatar with initials
     const initials = (alt || 'A').charAt(0).toUpperCase();
     return (
       <Avatar sx={{ ...sx, bgcolor: 'primary.main' }}>
-        <Typography variant="caption" color="primary.contrastText">
-          {initials}
-        </Typography>
+        <Typography variant="caption" color="primary.contrastText">{initials}</Typography>
       </Avatar>
     );
   }
 
   return (
     <>
-      {!imageLoaded && !imageError && (
-        <Skeleton variant="circular" sx={sx} />
-      )}
+      {!imageLoaded && !imageError && <Skeleton variant="circular" sx={sx} />}
       <Avatar
         src={imageUrl}
         alt={alt}
@@ -237,7 +171,7 @@ const LazyAvatar = ({ src, alt, sx, ...props }) => {
           display: imageLoaded && !imageError ? 'block' : 'none',
         }}
         onLoad={() => setImageLoaded(true)}
-        onError={(e) => {
+        onError={() => {
           console.error('Avatar image failed to load:', imageUrl);
           setImageError(true);
           setImageLoaded(false);
@@ -247,176 +181,149 @@ const LazyAvatar = ({ src, alt, sx, ...props }) => {
     </>
   );
 };
-// ***** END LAZY IMAGE COMPONENTS *****
 
-// ***** EXTRACTED: Social Sharing Component *****
+// Social Sharing Component
 const SocialShareBar = ({ post, handleShare }) => (
   <Box sx={{ mb: 4, p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
     <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
       Share this article
     </Typography>
     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-      <Tooltip title="Share on Facebook">
-        <MuiIconButton
-          onClick={() => handleShare('facebook')}
-          sx={{ bgcolor: '#4267B2', color: 'white', '&:hover': { bgcolor: '#365899' } }}
-        >
-          <FacebookIcon />
-        </MuiIconButton>
-      </Tooltip>
-      <Tooltip title="Share on Twitter">
-        <MuiIconButton
-          onClick={() => handleShare('twitter')}
-          sx={{ bgcolor: '#1DA1F2', color: 'white', '&:hover': { bgcolor: '#0d8bd9' } }}
-        >
-          <TwitterIcon />
-        </MuiIconButton>
-      </Tooltip>
-      <Tooltip title="Share on LinkedIn">
-        <MuiIconButton
-          onClick={() => handleShare('linkedin')}
-          sx={{ bgcolor: '#0077B5', color: 'white', '&:hover': { bgcolor: '#005885' } }}
-        >
-          <LinkedInIcon />
-        </MuiIconButton>
-      </Tooltip>
-      <Tooltip title="Share on WhatsApp">
-        <MuiIconButton
-          onClick={() => handleShare('whatsapp')}
-          sx={{ bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1da851' } }}
-        >
-          <WhatsAppIcon />
-        </MuiIconButton>
-      </Tooltip>
-      <Tooltip title="Share via Email">
-        <MuiIconButton
-          onClick={() => handleShare('email')}
-          sx={{ bgcolor: '#EA4335', color: 'white', '&:hover': { bgcolor: '#d33b2c' } }}
-        >
-          <EmailIcon />
-        </MuiIconButton>
-      </Tooltip>
-      <Tooltip title="Copy Link">
-        <MuiIconButton
-          onClick={() => handleShare('copy')}
-          sx={{ bgcolor: 'grey.700', color: 'white', '&:hover': { bgcolor: 'grey.800' } }}
-        >
-          <ShareIcon />
-        </MuiIconButton>
-      </Tooltip>
+      <MuiIconButton
+        onClick={() => handleShare('facebook')}
+        sx={{ bgcolor: '#4267B2', color: 'white', '&:hover': { bgcolor: '#365899' } }}
+        aria-label="Share on Facebook"
+      >
+        <FacebookIcon />
+      </MuiIconButton>
+      <MuiIconButton
+        onClick={() => handleShare('twitter')}
+        sx={{ bgcolor: '#1DA1F2', color: 'white', '&:hover': { bgcolor: '#0d8bd9' } }}
+        aria-label="Share on Twitter"
+      >
+        <TwitterIcon />
+      </MuiIconButton>
+      <MuiIconButton
+        onClick={() => handleShare('linkedin')}
+        sx={{ bgcolor: '#0077B5', color: 'white', '&:hover': { bgcolor: '#005885' } }}
+        aria-label="Share on LinkedIn"
+      >
+        <LinkedInIcon />
+      </MuiIconButton>
+      <MuiIconButton
+        onClick={() => handleShare('whatsapp')}
+        sx={{ bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1da851' } }}
+        aria-label="Share on WhatsApp"
+      >
+        <WhatsAppIcon />
+      </MuiIconButton>
+      <MuiIconButton
+        onClick={() => handleShare('email')}
+        sx={{ bgcolor: '#EA4335', color: 'white', '&:hover': { bgcolor: '#d33b2c' } }}
+        aria-label="Share via Email"
+      >
+        <EmailIcon />
+      </MuiIconButton>
+      <MuiIconButton
+        onClick={() => handleShare('copy')}
+        sx={{ bgcolor: 'grey.700', color: 'white', '&:hover': { bgcolor: 'grey.800' } }}
+        aria-label="Copy Link"
+      >
+        <ShareIcon />
+      </MuiIconButton>
     </Box>
   </Box>
 );
-// ***** END EXTRACTED: Social Sharing Component *****
 
-/**
- * CommentItem - recursive component to render a comment and its replies
- * Props passed from parent:
- *  - comment: comment object
- *  - replyForms: state object holding reply form state per comment id
- *  - toggleReplyForm(parentId)
- *  - handleReplyChange(parentId, e)
- *  - submitReply(parentId)
- */
+// CommentItem Component
 const CommentItem = ({ comment, replyForms, toggleReplyForm, handleReplyChange, submitReply }) => {
   const form = replyForms[comment.id] || { visible: false, name: '', email: '', content: '', submitting: false };
 
   return (
-    <Card key={comment.id} sx={{ mb: 2, ml: comment.parent ? { xs: 2, sm: 4 } : 0 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <LazyAvatar
-            sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main' }}
-          >
-            {(comment.display_name || comment.name || 'A').charAt(0).toUpperCase()}
-          </LazyAvatar>
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              {comment.display_name || comment.name || 'Anonymous'}
-            </Typography>
-          </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
-            {new Date(comment.created_at).toLocaleString()}
+    <Paper key={comment.id} sx={{ mb: 2, ml: comment.parent ? { xs: 2, sm: 4 } : 0, p: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+        <LazyAvatar sx={{ width: 32, height: 32, mr: 1, bgcolor: 'primary.main' }}>
+          {(comment.display_name || comment.name || 'A').charAt(0).toUpperCase()}
+        </LazyAvatar>
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+            {comment.display_name || comment.name || 'Anonymous'}
           </Typography>
         </Box>
-
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-          {comment.content}
+        <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+          {new Date(comment.created_at).toLocaleString()}
         </Typography>
-
-        {/* Reply button */}
-        <Box sx={{ mt: 1 }}>
-          <Button size="small" onClick={() => toggleReplyForm(comment.id)}>
-            Reply
+      </Box>
+      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+        {comment.content}
+      </Typography>
+      <Box sx={{ mt: 1 }}>
+        <Button size="small" onClick={() => toggleReplyForm(comment.id)}>
+          Reply
+        </Button>
+      </Box>
+      {form.visible && (
+        <Box component="form" onSubmit={(e) => { e.preventDefault(); submitReply(comment.id); }} sx={{ mt: 2 }}>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                name="name"
+                label="Your Name"
+                variant="outlined"
+                fullWidth
+                value={form.name}
+                onChange={(e) => handleReplyChange(comment.id, e)}
+                required
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                name="email"
+                label="Your Email"
+                variant="outlined"
+                fullWidth
+                value={form.email}
+                onChange={(e) => handleReplyChange(comment.id, e)}
+                required
+                size="small"
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                name="content"
+                label="Your Reply"
+                multiline
+                rows={3}
+                variant="outlined"
+                fullWidth
+                value={form.content}
+                onChange={(e) => handleReplyChange(comment.id, e)}
+                required
+                size="small"
+              />
+            </Grid>
+          </Grid>
+          <Button type="submit" variant="contained" disabled={form.submitting} sx={{ mt: 1 }}>
+            {form.submitting ? 'Posting...' : 'Post Reply'}
           </Button>
         </Box>
-
-        {/* Inline reply form */}
-        {form.visible && (
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); submitReply(comment.id); }} sx={{ mt: 2 }}>
-            <Grid container spacing={1}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  name="name"
-                  label="Your Name"
-                  variant="outlined"
-                  fullWidth
-                  value={form.name}
-                  onChange={(e) => handleReplyChange(comment.id, e)}
-                  required
-                  size="small"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  name="email"
-                  label="Your Email"
-                  variant="outlined"
-                  fullWidth
-                  value={form.email}
-                  onChange={(e) => handleReplyChange(comment.id, e)}
-                  required
-                  size="small"
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  name="content"
-                  label="Your Reply"
-                  multiline
-                  rows={3}
-                  variant="outlined"
-                  fullWidth
-                  value={form.content}
-                  onChange={(e) => handleReplyChange(comment.id, e)}
-                  required
-                  size="small"
-                />
-              </Grid>
-            </Grid>
-            <Button type="submit" variant="contained" disabled={form.submitting} sx={{ mt: 1 }}>
-              {form.submitting ? 'Posting...' : 'Post Reply'}
-            </Button>
-          </Box>
-        )}
-
-        {/* Nested replies (recursive) */}
-        {comment.replies && comment.replies.length > 0 && (
-          <Box sx={{ mt: 2, pl: 2, borderLeft: '2px solid', borderColor: 'divider' }}>
-            {comment.replies.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                replyForms={replyForms}
-                toggleReplyForm={toggleReplyForm}
-                handleReplyChange={handleReplyChange}
-                submitReply={submitReply}
-              />
-            ))}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+      )}
+      {comment.replies && comment.replies.length > 0 && (
+        <Box sx={{ mt: 2, pl: 2, borderLeft: '2px solid', borderColor: 'divider' }}>
+          {comment.replies.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              replyForms={replyForms}
+              toggleReplyForm={toggleReplyForm}
+              handleReplyChange={handleReplyChange}
+              submitReply={submitReply}
+            />
+          ))}
+        </Box>
+      )}
+    </Paper>
   );
 };
 
@@ -425,25 +332,31 @@ const PostDetail = () => {
   const [post, setPost] = useState(null);
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [ads, setAds] = useState([]);
-  // ***** NEW: State for adjacent posts *****
   const [adjacentPosts, setAdjacentPosts] = useState({ previous: null, next: null });
-  const [loadingAdjacent, setLoadingAdjacent] = useState(true); // Assume loading initially
-  // *************************************
-
-  // comments pagination state
-  const [comments, setComments] = useState([]); // top-level comments for current pages loaded
+  const [loadingAdjacent, setLoadingAdjacent] = useState(true);
+  const [comments, setComments] = useState([]);
   const [nextCommentsPage, setNextCommentsPage] = useState(null);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState(null);
-
   const [newComment, setNewComment] = useState({ name: '', email: '', content: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentError, setCommentError] = useState(null);
   const [submittingComment, setSubmittingComment] = useState(false);
-
-  // reply forms state: { [parentId]: { visible, name, email, content, submitting } }
   const [replyForms, setReplyForms] = useState({});
+
+  // Category-specific styling
+  const getCategoryStyle = (category) => {
+    const styles = {
+      technology: { color: '#1976d2', bgColor: '#e3f2fd' },
+      lifestyle: { color: '#9c27b0', bgColor: '#f3e5f5' },
+      politics: { color: '#d32f2f', bgColor: '#ffebee' },
+      worldnews: { color: '#0288d1', bgColor: '#e1f5fe' },
+      finance: { color: '#388e3c', bgColor: '#e8f5e9' },
+      education: { color: '#f57c00', bgColor: '#fff3e0' },
+    };
+    return styles[category?.slug] || { color: '#000', bgColor: '#fff' };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -451,7 +364,7 @@ const PostDetail = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch the main post
+        // Fetch main post
         const postRes = await axios.get(`${API_BASE}/api/posts/${slug}/`);
         setPost(postRes.data);
 
@@ -459,83 +372,64 @@ const PostDetail = () => {
         const relatedRes = await axios.get(`${API_BASE}/api/posts/${slug}/related/`);
         setRelatedPosts(relatedRes.data);
 
-        // Fetch paginated comments for the post (page 1)
+        // Fetch comments
         if (postRes.data?.id) {
           await fetchCommentsForPost(postRes.data.id, `${API_BASE}/api/posts/${postRes.data.id}/comments/?page=1`);
         }
 
-        // Ads
-        let adsUrl = `${API_BASE}/api/ads/`;
-        if (postRes.data?.category?.slug) {
-          adsUrl = `${API_BASE}/api/ads/?category=${postRes.data.category.slug}`;
-        }
+        // Fetch ads
+        const adsUrl = postRes.data?.category?.slug
+          ? `${API_BASE}/api/ads/?category=${postRes.data.category.slug}`
+          : `${API_BASE}/api/ads/`;
         const adsRes = await axios.get(adsUrl);
-        const activeAds = adsRes.data.filter((ad) => ad.is_active);
-        setAds(activeAds);
+        setAds(adsRes.data.filter((ad) => ad.is_active));
 
-        // ***** FETCH ADJACENT POSTS *****
+        // Fetch adjacent posts
         try {
           setLoadingAdjacent(true);
-          // Fetch adjacent posts from the new API endpoint
           const adjRes = await axios.get(`${API_BASE}/api/posts/${postRes.data.slug}/adjacent/`);
-          console.log("Adjacent posts API response:", adjRes.data);
-          setAdjacentPosts(adjRes.data); // Expected: { previous: {...}, next: {...} }
+          setAdjacentPosts(adjRes.data);
         } catch (adjError) {
-          console.error("Error fetching adjacent posts:", adjError);
-          // Gracefully handle if endpoint doesn't exist or fails
+          console.error('Error fetching adjacent posts:', adjError);
           setAdjacentPosts({ previous: null, next: null });
         } finally {
           setLoadingAdjacent(false);
         }
-        // ***** END FETCH ADJACENT POSTS *****
-
       } catch (err) {
-        console.error("Error fetching post page data:", err);
-        if (axios.isAxiosError(err)) {
-          if (err.response) {
-            setError(`Backend Error (${err.response.status}): ${JSON.stringify(err.response.data)}`);
-          } else if (err.request) {
-            setError('Network Error: Could not reach the server.');
-          } else {
-            setError('Request Setup Error.');
-          }
-        } else {
-          setError('An unexpected error occurred.');
-        }
+        console.error('Error fetching post data:', err);
+        setError(axios.isAxiosError(err)
+          ? err.response
+            ? `Backend Error (${err.response.status}): ${JSON.stringify(err.response.data)}`
+            : 'Network Error: Could not reach the server.'
+          : 'An unexpected error occurred.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  // Fetch comments helper (accepts full URL for pagination)
   const fetchCommentsForPost = async (postId, url) => {
     try {
       setLoadingComments(true);
       setCommentsError(null);
       const res = await axios.get(url);
-      // DRF paginated response: { count, next, previous, results }
-      const results = res.data.results || res.data; // fallback if non-paginated
-      setComments((prev) => [...prev, ...results]);
+      setComments((prev) => [...prev, ...(res.data.results || res.data)]);
       setNextCommentsPage(res.data.next);
     } catch (err) {
-      console.error("Failed to load comments:", err);
+      console.error('Failed to load comments:', err);
       setCommentsError('Failed to load comments.');
     } finally {
       setLoadingComments(false);
     }
   };
 
-  // Load more comments (pagination)
   const loadMoreComments = async () => {
     if (!nextCommentsPage) return;
     await fetchCommentsForPost(post.id, nextCommentsPage);
   };
 
-  // Add reply into nested comments tree
   const addReplyToComments = (items, parentId, reply) => {
     return items.map((item) => {
       if (item.id === parentId) {
@@ -549,7 +443,6 @@ const PostDetail = () => {
     });
   };
 
-  // Toggle reply form visibility for a parent comment
   const toggleReplyForm = (parentId) => {
     setReplyForms((prev) => {
       const cur = prev[parentId] || { visible: false, name: '', email: '', content: '', submitting: false };
@@ -557,7 +450,6 @@ const PostDetail = () => {
     });
   };
 
-  // Handle reply form field change
   const handleReplyChange = (parentId, e) => {
     const { name, value } = e.target;
     setReplyForms((prev) => {
@@ -566,7 +458,6 @@ const PostDetail = () => {
     });
   };
 
-  // Submit reply
   const submitReply = async (parentId) => {
     const form = replyForms[parentId] || {};
     if (!form.content || !form.name || !form.email) {
@@ -575,9 +466,7 @@ const PostDetail = () => {
     }
 
     try {
-      // mark submitting true
       setReplyForms((prev) => ({ ...prev, [parentId]: { ...prev[parentId], submitting: true } }));
-
       const payload = {
         post: post.id,
         parent: parentId,
@@ -585,27 +474,19 @@ const PostDetail = () => {
         email: form.email,
         content: form.content,
       };
-
       const res = await axios.post(`${API_BASE}/api/comments/create/`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
-
-      const newReply = res.data;
-
-      // Insert reply in the nested comments tree
-      setComments((prev) => addReplyToComments(prev, parentId, newReply));
-
-      // hide & reset form
+      setComments((prev) => addReplyToComments(prev, parentId, res.data));
       setReplyForms((prev) => ({ ...prev, [parentId]: { visible: false, name: '', email: '', content: '', submitting: false } }));
       setCommentError(null);
     } catch (err) {
-      console.error("Failed to submit reply:", err);
+      console.error('Failed to submit reply:', err);
       setCommentError('Failed to submit reply. Please try again.');
       setReplyForms((prev) => ({ ...prev, [parentId]: { ...prev[parentId], submitting: false } }));
     }
   };
 
-  // Top-level comment handlers (posting new comment)
   const handleCommentChange = (e) => {
     const { name, value } = e.target;
     setNewComment((prev) => ({ ...prev, [name]: value }));
@@ -617,8 +498,6 @@ const PostDetail = () => {
       setCommentError('Please fill in all fields.');
       return;
     }
-
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newComment.email)) {
       setCommentError('Please enter a valid email address.');
@@ -635,26 +514,21 @@ const PostDetail = () => {
         email: newComment.email,
         content: newComment.content,
       };
-
       const res = await axios.post(`${API_BASE}/api/comments/create/`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
-
-      // Prepend new top-level comment
       setComments((prev) => [res.data, ...prev]);
       setNewComment({ name: '', email: '', content: '' });
     } catch (err) {
-      console.error("Failed to submit comment:", err);
+      console.error('Failed to submit comment:', err);
       setCommentError('Failed to submit comment. Please try again.');
     } finally {
       setSubmittingComment(false);
     }
   };
 
-  // ***** NEW: Social Sharing Function *****
   const handleShare = async (platform) => {
     if (!post) return;
-
     const title = encodeURIComponent(post.title);
     const url = encodeURIComponent(window.location.href);
     let shareUrl = '';
@@ -676,26 +550,22 @@ const PostDetail = () => {
         shareUrl = `mailto:?subject=${title}&body=Check out this article: ${url}`;
         break;
       default:
-        // Copy to clipboard
         try {
           await navigator.clipboard.writeText(window.location.href);
           alert('Link copied to clipboard!');
         } catch (err) {
-          console.error('Failed to copy link: ', err);
-          // Fallback: prompt user to copy
+          console.error('Failed to copy link:', err);
           prompt('Copy this link:', window.location.href);
         }
-        return; // Don't open a new window for copy
+        return;
     }
 
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
     }
   };
-  // ***** END NEW: Social Sharing Function *****
 
   const carouselPosts = relatedPosts.slice(0, 3);
-  const listPosts = relatedPosts.slice(3);
 
   if (loading) {
     return (
@@ -733,18 +603,19 @@ const PostDetail = () => {
     );
   }
 
+  const categoryStyle = getCategoryStyle(post.category);
+
   return (
     <>
       <Header />
       <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 4 } }}>
         <Grid container spacing={{ xs: 2, sm: 4 }}>
-          {/* MAIN CONTENT */}
           <Grid size={{ xs: 12, lg: 8 }}>
             <Box sx={{ width: '100%' }}>
               {post.featured_image && (
                 <Box sx={{ mb: { xs: 2, sm: 3 }, textAlign: 'center' }}>
                   <LazyImage
-                    src={getImageUrl(post.featured_image)}
+                    src={post.featured_image}
                     alt={post.title}
                     sx={{
                       width: '100%',
@@ -756,49 +627,66 @@ const PostDetail = () => {
                   />
                 </Box>
               )}
-
-              {/* Social Sharing Bar */}
               <SocialShareBar post={post} handleShare={handleShare} />
-
-              <Typography variant="h1" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' }, lineHeight: 1.2, mb: 2, wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+              <Typography
+                variant="h1"
+                component="h1"
+                gutterBottom
+                sx={{
+                  fontWeight: 'bold',
+                  color: categoryStyle.color,
+                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+                  lineHeight: 1.2,
+                  mb: 2,
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                }}
+              >
                 {post.title}
               </Typography>
-
-              {/* Meta */}
-              <Box sx={{ mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+              <Box sx={{ mb: 3, pb: 2, borderBottom: `1px solid ${categoryStyle.color}` }}>
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   By <b>{post.author?.username}</b> • {new Date(post.created_at).toLocaleDateString()} • {post.views_count || 0} views
                 </Typography>
                 {post.tags && (
                   <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {post.tags.split(',').map((tag, index) => (
-                      <Chip key={index} label={tag.trim()} size="small" variant="outlined" sx={{ fontSize: '0.75rem', maxWidth: '100%', '& .MuiChip-label': { whiteSpace: 'normal', wordBreak: 'break-all' } }} />
+                      <Chip
+                        key={index}
+                        label={tag.trim()}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem', maxWidth: '100%', '& .MuiChip-label': { whiteSpace: 'normal', wordBreak: 'break-all' } }}
+                      />
                     ))}
                   </Box>
                 )}
               </Box>
-
-              {/* Content */}
-              <Box sx={{ wordWrap: 'break-word', overflowWrap: 'break-word', hyphens: 'auto', '& p': { mb: 2, fontSize: { xs: '1rem', sm: '1.1rem' }, lineHeight: 1.7, textAlign: 'justify', wordWrap: 'break-word', overflowWrap: 'break-word' }, '& h2': { mt: 4, mb: 2, fontWeight: 'bold', color: 'primary.main', fontSize: { xs: '1.5rem', sm: '1.75rem' } }, '& h3': { mt: 3, mb: 1.5, fontWeight: 'bold', color: 'secondary.main', fontSize: { xs: '1.25rem', sm: '1.5rem' } }, '& ul, & ol': { pl: 3, mb: 2, fontSize: { xs: '1rem', sm: '1.1rem' } }, '& li': { mb: 0.5 }, '& blockquote': { borderLeft: '4px solid', borderColor: 'primary.main', pl: 2, my: 2, fontStyle: 'italic', bgcolor: 'grey.50' }, '& a': { color: 'primary.main', textDecoration: 'underline', '&:hover': { textDecoration: 'none' } }, '& pre': { p: 2, bgcolor: 'grey.100', border: '1px solid', borderColor: 'grey.300', borderRadius: 1, overflowX: 'auto', my: 2, fontSize: '0.9rem' }, '& code': { p: 0.5, bgcolor: 'grey.100', border: '1px solid', borderColor: 'grey.300', borderRadius: 0.5, fontSize: '0.9rem' } }}>
+              <Box
+                sx={{
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                  '& p': { mb: 2, fontSize: { xs: '1rem', sm: '1.1rem' }, lineHeight: 1.7, textAlign: 'justify' },
+                  '& h2': { mt: 4, mb: 2, fontWeight: 'bold', color: categoryStyle.color, fontSize: { xs: '1.5rem', sm: '1.75rem' } },
+                  '& h3': { mt: 3, mb: 1.5, fontWeight: 'bold', color: 'secondary.main', fontSize: { xs: '1.25rem', sm: '1.5rem' } },
+                  '& ul, & ol': { pl: 3, mb: 2, fontSize: { xs: '1rem', sm: '1.1rem' } },
+                  '& li': { mb: 0.5 },
+                  '& blockquote': { borderLeft: `4px solid ${categoryStyle.color}`, pl: 2, my: 2, fontStyle: 'italic', bgcolor: categoryStyle.bgColor },
+                  '& a': { color: categoryStyle.color, textDecoration: 'underline', '&:hover': { textDecoration: 'none' } },
+                  '& pre': { p: 2, bgcolor: 'grey.100', border: '1px solid', borderColor: 'grey.300', borderRadius: 1, overflowX: 'auto', my: 2, fontSize: '0.9rem' },
+                  '& code': { p: 0.5, bgcolor: 'grey.100', border: '1px solid', borderColor: 'grey.300', borderRadius: 0.5, fontSize: '0.9rem' },
+                }}
+              >
                 <Typography variant="body1" component="div">
                   {formatContent(post.content)}
                 </Typography>
               </Box>
-
-              {/* Divider before related posts section */}
-              <Divider sx={{ my: 4 }} />
-
-              {/* ***** ENHANCEMENT 1: Adjacent Post Navigation ***** */}
+              <Box sx={{ my: 4, height: '1px', bgcolor: categoryStyle.color }} />
               <Box sx={{ mb: 4, py: 2 }}>
-                <Typography
-                  variant="h5"
-                  component="h2"
-                  gutterBottom
-                  sx={{ fontWeight: 'bold', color: 'secondary.main', mb: 2 }}
-                >
+                <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: 'secondary.main', mb: 2 }}>
                   Continue Reading
                 </Typography>
-
                 {loadingAdjacent ? (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Skeleton variant="rectangular" width={100} height={40} />
@@ -824,9 +712,8 @@ const PostDetail = () => {
                         </Box>
                       </Button>
                     ) : (
-                      <Box sx={{ width: 100 }} /> // Spacer
+                      <Box sx={{ width: 100 }} />
                     )}
-
                     {adjacentPosts.next ? (
                       <Button
                         component={Link}
@@ -845,49 +732,49 @@ const PostDetail = () => {
                         </Box>
                       </Button>
                     ) : (
-                      <Box sx={{ width: 100 }} /> // Spacer
+                      <Box sx={{ width: 100 }} />
                     )}
                   </Box>
                 )}
               </Box>
-              {/* ***** END ENHANCEMENT 1 ***** */}
-
-              {/* Related */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
                   Related Posts
                 </Typography>
-
                 {carouselPosts.length > 0 ? (
                   <Box sx={{ mb: 4 }}>
-                    <Swiper modules={[Navigation, Pagination]} spaceBetween={20} slidesPerView={1} navigation pagination={{ clickable: true }} breakpoints={{ 600: { slidesPerView: 2 }, 900: { slidesPerView: 3 } }}>
+                    <Swiper
+                      modules={[Navigation, Pagination]}
+                      spaceBetween={20}
+                      slidesPerView={1}
+                      navigation
+                      pagination={{ clickable: true }}
+                      breakpoints={{ 600: { slidesPerView: 2 }, 900: { slidesPerView: 3 } }}
+                    >
                       {carouselPosts.map((relatedPost) => (
                         <SwiperSlide key={`carousel-${relatedPost.id}`}>
-                          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             {relatedPost.featured_image && (
                               <LazyCardMedia
-                                src={getImageUrl(relatedPost.featured_image)}
+                                src={relatedPost.featured_image}
                                 alt={relatedPost.title}
-                                sx={{ 
-                                  height: 140, 
-                                  objectFit: 'cover' 
-                                }}
+                                sx={{ height: 140, objectFit: 'cover' }}
                               />
                             )}
-                            <CardContent sx={{ flexGrow: 1 }}>
-                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                            <Box sx={{ flexGrow: 1, p: 2 }}>
+                              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold', color: categoryStyle.color }}>
                                 {relatedPost.title}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                                 {new Date(relatedPost.created_at).toLocaleDateString()}
                               </Typography>
-                            </CardContent>
+                            </Box>
                             <CardActions>
                               <Button size="small" component={Link} to={`/post/${relatedPost.slug}`}>
                                 Read More
                               </Button>
                             </CardActions>
-                          </Card>
+                          </Paper>
                         </SwiperSlide>
                       ))}
                     </Swiper>
@@ -898,67 +785,57 @@ const PostDetail = () => {
                   </Typography>
                 )}
               </Box>
-
-              {/* Divider before comments */}
-              <Divider sx={{ my: 4 }} />
-
-              {/* Comments Section */}
+              <Box sx={{ my: 4, height: '1px', bgcolor: categoryStyle.color }} />
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
                   Comments ({comments.length})
                 </Typography>
-
-                {/* Top-level comment form */}
-                <Card sx={{ mb: 3, p: 2 }}>
-                  <CardContent>
-                    <form onSubmit={handleCommentSubmit}>
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <TextField
-                            name="name"
-                            label="Your Name"
-                            variant="outlined"
-                            fullWidth
-                            value={newComment.name}
-                            onChange={handleCommentChange}
-                            required
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <TextField
-                            name="email"
-                            label="Your Email"
-                            type="email"
-                            variant="outlined"
-                            fullWidth
-                            value={newComment.email}
-                            onChange={handleCommentChange}
-                            required
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            name="content"
-                            label="Leave a comment"
-                            multiline
-                            rows={4}
-                            variant="outlined"
-                            fullWidth
-                            value={newComment.content}
-                            onChange={handleCommentChange}
-                            required
-                          />
-                        </Grid>
+                <Paper sx={{ mb: 3, p: 2 }}>
+                  <Box component="form" onSubmit={handleCommentSubmit}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                          name="name"
+                          label="Your Name"
+                          variant="outlined"
+                          fullWidth
+                          value={newComment.name}
+                          onChange={handleCommentChange}
+                          required
+                        />
                       </Grid>
-                      {commentError && <Alert severity="error" sx={{ mt: 2, mb: 2 }}>{commentError}</Alert>}
-                      <Button type="submit" variant="contained" disabled={submittingComment} sx={{ mt: 2 }}>
-                        {submittingComment ? 'Posting...' : 'Post Comment'}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-
-                {/* Comments list (recursive) */}
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <TextField
+                          name="email"
+                          label="Your Email"
+                          type="email"
+                          variant="outlined"
+                          fullWidth
+                          value={newComment.email}
+                          onChange={handleCommentChange}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <TextField
+                          name="content"
+                          label="Leave a comment"
+                          multiline
+                          rows={4}
+                          variant="outlined"
+                          fullWidth
+                          value={newComment.content}
+                          onChange={handleCommentChange}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    {commentError && <Alert severity="error" sx={{ mt: 2, mb: 2 }}>{commentError}</Alert>}
+                    <Button type="submit" variant="contained" disabled={submittingComment} sx={{ mt: 2 }}>
+                      {submittingComment ? 'Posting...' : 'Post Comment'}
+                    </Button>
+                  </Box>
+                </Paper>
                 {comments.length > 0 ? (
                   <>
                     {comments.map((comment) => (
@@ -971,8 +848,6 @@ const PostDetail = () => {
                         submitReply={submitReply}
                       />
                     ))}
-
-                    {/* Load more */}
                     {nextCommentsPage && (
                       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                         <Button variant="outlined" onClick={loadMoreComments} disabled={loadingComments}>
@@ -986,35 +861,29 @@ const PostDetail = () => {
                     No comments yet. Be the first!
                   </Typography>
                 )}
-
                 {commentsError && <Alert severity="error" sx={{ mt: 2 }}>{commentsError}</Alert>}
               </Box>
             </Box>
           </Grid>
-
-          {/* SIDEBAR */}
           <Grid size={{ xs: 12, lg: 4 }}>
             <Box sx={{ position: { lg: 'sticky' }, top: { lg: 20 }, mt: { xs: 4, lg: 0 } }}>
               <Typography variant="h6" gutterBottom>Sponsored</Typography>
-              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ my: 2, height: '1px', bgcolor: categoryStyle.color }} />
               {ads.length > 0 ? (
                 ads.map((ad) => (
-                  <Card key={ad.id} sx={{ mb: 3 }}>
+                  <Paper key={ad.id} sx={{ mb: 3, p: 2 }}>
                     {ad.image_url && (
                       <LazyCardMedia
-                        src={getImageUrl(ad.image_url)}
+                        src={ad.image_url}
                         alt={ad.title}
-                        sx={{ 
-                          height: 200, 
-                          objectFit: 'cover' 
-                        }}
+                        sx={{ height: 200, objectFit: 'cover' }}
                       />
                     )}
-                    <CardContent>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{ad.title}</Typography>
-                      <Button variant="contained" fullWidth href={ad.target_url} target="_blank" sx={{ mt: 1 }}>{ad.cta || 'Learn More'}</Button>
-                    </CardContent>
-                  </Card>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1 }}>{ad.title}</Typography>
+                    <Button variant="contained" fullWidth href={ad.target_url} target="_blank" sx={{ mt: 1 }}>
+                      {ad.cta || 'Learn More'}
+                    </Button>
+                  </Paper>
                 ))
               ) : (
                 <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 2, fontStyle: 'italic' }}>

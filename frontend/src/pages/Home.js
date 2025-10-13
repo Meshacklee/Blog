@@ -1,15 +1,11 @@
-// frontend/src/pages/Home.js
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, Typography, Box, CircularProgress, Card, 
-  CardContent, CardMedia, Paper, IconButton, Grid 
-} from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Paper, IconButton, Grid } from '@mui/material';
 import { Link } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { newsApi } from '../services/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import TechnologyPage from './categories/TechnologyPage';
 import FinancePage from './categories/FinancePage';
 import WorldNewsPage from './categories/WorldNewsPage';
@@ -18,57 +14,74 @@ import EducationPage from './categories/EducationPage';
 import PoliticsPage from './categories/PoliticsPage';
 
 const Home = () => {
-  // ❌ Removed unused states that caused build errors
+  const [worldPosts, setWorldPosts] = useState([]);
+  const [politicsPosts, setPoliticsPosts] = useState([]);
+  const [featuredPosts, setFeaturedPosts] = useState([]);
   const [carouselPosts, setCarouselPosts] = useState([]);
+  const [worldLoading, setWorldLoading] = useState(true);
+  const [politicsLoading, setPoliticsLoading] = useState(true);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [carouselLoading, setCarouselLoading] = useState(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  // ✅ Only fetching carousel posts now
   useEffect(() => {
-    const fetchCarouselPosts = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch World News posts
+        setWorldLoading(true);
+        const worldResponse = await newsApi.getPostsByCategory('worldnews');
+        setWorldPosts(Array.isArray(worldResponse.data) ? worldResponse.data : (worldResponse.data?.results || []));
+
+        // Fetch Politics posts
+        setPoliticsLoading(true);
+        const politicsResponse = await newsApi.getPostsByCategory('politics');
+        setPoliticsPosts(Array.isArray(politicsResponse.data) ? politicsResponse.data : (politicsResponse.data?.results || []));
+
+        // Fetch Featured posts
+        setFeaturedLoading(true);
+        const featuredResponse = await newsApi.getFeaturedPosts();
+        const featuredData = Array.isArray(featuredResponse.data) ? featuredResponse.data : (featuredResponse.data?.results || []);
+        setFeaturedPosts(featuredData.slice(0, 10));
+
+        // Fetch Carousel posts
         setCarouselLoading(true);
-        const response = await newsApi.getPostsByCategory('slidingcarousel');
-        const data = Array.isArray(response.data)
-          ? response.data
-          : (response.data?.results || []);
-        setCarouselPosts(data);
+        const carouselResponse = await newsApi.getPostsByCategory('slidingcarousel');
+        setCarouselPosts(Array.isArray(carouselResponse.data) ? carouselResponse.data : (carouselResponse.data?.results || []));
       } catch (error) {
-        console.error('Error fetching sliding carousel posts:', error);
+        console.error('Error fetching posts:', error);
+        setWorldPosts([]);
+        setPoliticsPosts([]);
+        setFeaturedPosts([]);
         setCarouselPosts([]);
       } finally {
+        setWorldLoading(false);
+        setPoliticsLoading(false);
+        setFeaturedLoading(false);
         setCarouselLoading(false);
       }
     };
 
-    fetchCarouselPosts();
+    fetchData();
   }, []);
 
-  // ✅ Auto-slide logic
+  // Auto-advance carousel
   useEffect(() => {
     if (carouselPosts.length > 0) {
       const interval = setInterval(() => {
-        setCurrentSlideIndex((prevIndex) =>
-          prevIndex === carouselPosts.length - 1 ? 0 : prevIndex + 1
-        );
+        setCurrentSlideIndex((prevIndex) => (prevIndex === carouselPosts.length - 1 ? 0 : prevIndex + 1));
       }, 5000);
       return () => clearInterval(interval);
     }
   }, [carouselPosts.length]);
 
   const nextSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === carouselPosts.length - 1 ? 0 : prevIndex + 1
-    );
+    setCurrentSlideIndex((prevIndex) => (prevIndex === carouselPosts.length - 1 ? 0 : prevIndex + 1));
   };
 
   const prevSlide = () => {
-    setCurrentSlideIndex((prevIndex) =>
-      prevIndex === 0 ? carouselPosts.length - 1 : prevIndex - 1
-    );
+    setCurrentSlideIndex((prevIndex) => (prevIndex === 0 ? carouselPosts.length - 1 : prevIndex - 1));
   };
 
-  // ✅ Carousel Section
   const FeaturedCarousel = ({ posts, loading }) => {
     if (loading) {
       return (
@@ -112,43 +125,80 @@ const Home = () => {
           </Box>
         </Box>
 
-        {/* Main featured post */}
-        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-          {currentPost?.featured_image && (
-            <CardMedia
-              component="img"
-              height="400"
-              image={
-                currentPost.featured_image.startsWith('http')
-                  ? currentPost.featured_image
-                  : `${process.env.REACT_APP_API_BASE_URL}${currentPost.featured_image}`
-              }
-              alt={currentPost.title}
-              sx={{ objectFit: 'cover', objectPosition: 'center' }}
-              onError={(e) => (e.target.style.display = 'none')}
-            />
-          )}
-          <CardContent>
-            <Typography
-              variant="h5"
-              gutterBottom
-              component={Link}
-              to={`/post/${currentPost?.slug}`}
-              sx={{
-                textDecoration: 'none',
-                color: 'inherit',
-                '&:hover': { color: 'primary.main', textDecoration: 'underline' },
-              }}
-            >
-              {currentPost?.title}
-            </Typography>
-          </CardContent>
-        </Card>
+        <Box sx={{ position: 'relative', mb: 3 }}>
+          {/* Main featured post */}
+          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            {currentPost?.featured_image && (
+              <img
+                src={currentPost.featured_image.startsWith('http') ? currentPost.featured_image : `http://localhost:8000${currentPost.featured_image}`}
+                alt={currentPost.title}
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  borderRadius: '4px',
+                }}
+                onError={(e) => {
+                  console.error('Carousel main image failed to load:', currentPost.featured_image);
+                  e.target.src = '/placeholder.jpg'; // Fallback image
+                }}
+              />
+            )}
+            <Box sx={{ p: 2 }}>
+              <Typography
+                variant="h5"
+                gutterBottom
+                component={Link}
+                to={`/post/${currentPost?.slug}`}
+                sx={{
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                }}
+              >
+                {currentPost?.title}
+              </Typography>
+            </Box>
+          </Paper>
 
-        {/* Thumbnails */}
-        <Grid container spacing={2} sx={{ mt: 3 }}>
+          {/* Navigation dots */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mt: 2,
+              position: 'absolute',
+              bottom: -30,
+              left: '50%',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            {posts.map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: index === currentSlideIndex ? 'primary.main' : 'grey.300',
+                  margin: '0 4px',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: index === currentSlideIndex ? 'primary.dark' : 'grey.400',
+                  },
+                }}
+                onClick={() => setCurrentSlideIndex(index)}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Smaller featured posts */}
+        <Grid container spacing={2}>
           {nextPosts.map((post) => (
-            <Grid item xs={12} md={4} key={post.id}>
+            <Grid key={post.id} size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
               <Paper
                 elevation={3}
                 sx={{
@@ -157,16 +207,13 @@ const Home = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   '&:hover': { boxShadow: 6 },
+                  width: '100%',
                 }}
               >
                 {post.featured_image && (
                   <Box sx={{ mb: 1 }}>
                     <img
-                      src={
-                        post.featured_image.startsWith('http')
-                          ? post.featured_image
-                          : `${process.env.REACT_APP_API_BASE_URL}${post.featured_image}`
-                      }
+                      src={post.featured_image.startsWith('http') ? post.featured_image : `http://localhost:8000${post.featured_image}`}
                       alt={post.title}
                       style={{
                         width: '100%',
@@ -175,7 +222,10 @@ const Home = () => {
                         borderRadius: '4px',
                         objectPosition: 'center',
                       }}
-                      onError={(e) => (e.target.style.display = 'none')}
+                      onError={(e) => {
+                        console.error('Carousel thumbnail image failed to load:', post.featured_image);
+                        e.target.src = '/placeholder.jpg'; // Fallback image
+                      }}
                     />
                   </Box>
                 )}
@@ -188,10 +238,7 @@ const Home = () => {
                   sx={{
                     textDecoration: 'none',
                     color: 'inherit',
-                    '&:hover': {
-                      color: 'primary.main',
-                      textDecoration: 'underline',
-                    },
+                    '&:hover': { color: 'primary.main', textDecoration: 'underline' },
                   }}
                 >
                   {post.title}
@@ -210,15 +257,12 @@ const Home = () => {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <FeaturedCarousel posts={carouselPosts} loading={carouselLoading} />
       </Container>
-
-      {/* Category Sections */}
       <TechnologyPage />
       <FinancePage />
       <WorldNewsPage />
       <LifestylePage />
       <EducationPage />
       <PoliticsPage />
-
       <Footer />
     </>
   );
