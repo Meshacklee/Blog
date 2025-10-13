@@ -1,7 +1,6 @@
 // frontend/src/components/NewsletterSignup.js
 import React, { useState } from 'react';
 import {
-  Box,
   Typography,
   TextField,
   Button,
@@ -40,46 +39,35 @@ const NewsletterSignup = () => {
 
     setLoading(true);
     try {
-      console.log("Attempting to subscribe email:", email); // Debug log
+      console.log("Attempting to subscribe email:", email);
       const response = await newsApi.subscribeNewsletter({ email });
-      console.log("Newsletter subscription response:", response.data); // Debug log
-      // Handle success message from backend
+      console.log("Newsletter subscription response:", response.data);
+
       if (response.data.message) {
         setSuccess(true);
-        setEmail(''); // Clear the input field
+        setEmail('');
       } else {
-        // Handle successful creation
         setSuccess(true);
-        setEmail(''); // Clear the input field
+        setEmail('');
       }
     } catch (error) {
-      console.error("Newsletter subscription error:", error); // Debug log
-      // Handle different types of errors
+      console.error("Newsletter subscription error:", error);
       if (error.response) {
-        // Server responded with error status
-        console.error("Backend Error Status:", error.response.status); // Debug log
-        console.error("Backend Error Data:", error.response.data); // Debug log
         if (error.response.status === 400) {
-          // Validation error
           const errorData = error.response.data;
           if (errorData.email) {
-            setError(errorData.email[0]); // Show first email error
+            setError(errorData.email[0]);
           } else {
             setError('Invalid input. Please check your email address.');
           }
         } else if (error.response.status === 500) {
           setError('Server error. Please try again later.');
         } else {
-          // Other server errors
           setError(`Server error (${error.response.status}). Please try again.`);
         }
       } else if (error.request) {
-        // Request was made but no response received
-        console.error("Network Error - No response:", error.request); // Debug log
         setError('Network error. Please check your connection.');
       } else {
-        // Something else happened
-        console.error("Request Setup Error:", error.message); // Debug log
         setError('An unexpected error occurred. Please try again.');
       }
     } finally {

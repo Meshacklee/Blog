@@ -103,7 +103,6 @@ const SearchBarContainer = styled(Box)(({ theme }) => ({
 
 const Header = () => {
   const theme = useTheme();
-  const isMdUp = useMediaQuery(theme.breakpoints.up('md'));
   const colorMode = useContext(ColorModeContext);
   const navigate = useNavigate();
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);

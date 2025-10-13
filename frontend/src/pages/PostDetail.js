@@ -1,4 +1,3 @@
-// src/pages/PostDetail.js
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -25,7 +24,6 @@ const PostDetail = () => {
   const [prevPost, setPrevPost] = useState(null);
   const [commentText, setCommentText] = useState('');
 
-  // Fetch post details
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -37,43 +35,21 @@ const PostDetail = () => {
         setLoading(false);
       }
     };
-
     fetchPost();
   }, [slug]);
 
-  // Fetch comments
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const response = await newsApi.get(`/posts/${slug}/comments/`);
         setComments(response.data);
-      } catch (err) {
+      } catch {
         console.error('Failed to load comments');
       }
     };
-
     fetchComments();
   }, [slug]);
 
-  // Fetch next/previous posts
-  useEffect(() => {
-    const fetchAdjacentPosts = async () => {
-      try {
-        const [prevRes, nextRes] = await Promise.all([
-          newsApi.get(`/posts/${slug}/previous/`).catch(() => null),
-          newsApi.get(`/posts/${slug}/next/`).catch(() => null),
-        ]);
-        setPrevPost(prevRes?.data || null);
-        setNextPost(nextRes?.data || null);
-      } catch (err) {
-        console.error('Failed to fetch adjacent posts');
-      }
-    };
-
-    fetchAdjacentPosts();
-  }, [slug]);
-
-  // Handle comment submission
   const handleCommentSubmit = async () => {
     if (!commentText.trim()) return;
     try {
@@ -81,20 +57,19 @@ const PostDetail = () => {
       setCommentText('');
       const response = await newsApi.get(`/posts/${slug}/comments/`);
       setComments(response.data);
-    } catch (err) {
+    } catch {
       console.error('Failed to post comment');
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Box textAlign="center" py={6}>
         <CircularProgress />
       </Box>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <Container>
         <Typography color="error" textAlign="center" py={4}>
@@ -102,7 +77,6 @@ const PostDetail = () => {
         </Typography>
       </Container>
     );
-  }
 
   if (!post) return null;
 
@@ -112,7 +86,8 @@ const PostDetail = () => {
         {post.title}
       </Typography>
       <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-        By {post.author?.username || 'Unknown'} — {new Date(post.created_at).toLocaleDateString()}
+        By {post.author?.username || 'Unknown'} —{' '}
+        {new Date(post.created_at).toLocaleDateString()}
       </Typography>
 
       {post.image && (
@@ -164,41 +139,9 @@ const PostDetail = () => {
         value={commentText}
         onChange={(e) => setCommentText(e.target.value)}
       />
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 2 }}
-        onClick={handleCommentSubmit}
-      >
+      <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleCommentSubmit}>
         Post Comment
       </Button>
-
-      <Divider sx={{ my: 4 }} />
-
-      <Grid container justifyContent="space-between">
-        {prevPost ? (
-          <Button
-            component={Link}
-            to={`/post/${prevPost.slug}`}
-            variant="outlined"
-            color="secondary"
-          >
-            ← {prevPost.title}
-          </Button>
-        ) : (
-          <span />
-        )}
-        {nextPost && (
-          <Button
-            component={Link}
-            to={`/post/${nextPost.slug}`}
-            variant="outlined"
-            color="secondary"
-          >
-            {nextPost.title} →
-          </Button>
-        )}
-      </Grid>
     </Container>
   );
 };
